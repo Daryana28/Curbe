@@ -1,0 +1,26 @@
+POST https://172.17.100.11:5008/login HTTP/1.1
+Content-Type: application/json
+x-access-token : eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJuaWsiOiIxODAzMDcwIiwiaWF0IjoxNjc4NjczOTU5LCJleHAiOjE2Nzg3NjAzNTl9.ZyNhXbbvzMHfxw9DrpIgU0TelFwBhb0mZZbFpJCLgiI
+
+{
+ "NIK" : "1703007",
+ "name": "SANCEP",
+ "level": "Admin",
+ "password": "1703007"
+}
+####
+POST http://172.17.12.63:5000/MigPark HTTP/1.1
+Content-Type: application/json
+x-access-token : eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJuaWsiOiIxODAzMDcwIiwiaWF0IjoxNjc4NjczOTU5LCJleHAiOjE2Nzg3NjAzNTl9.ZyNhXbbvzMHfxw9DrpIgU0TelFwBhb0mZZbFpJCLgiI
+
+{
+ "nik" : "1703007",
+ "name": "SANCEP",
+ "level": "Admin",
+ "password": "1703007"
+}
+####
+POST http://172.17.12.63:5000/MigTrans HTTP/1.1
+Content-Type: application/json
+x-access-token : eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJuaWsiOiIxODAzMDcwIiwiaWF0IjoxNjc4NjczOTU5LCJleHAiOjE2Nzg3NjAzNTl9.ZyNhXbbvzMHfxw9DrpIgU0TelFwBhb0mZZbFpJCLgiI
+
