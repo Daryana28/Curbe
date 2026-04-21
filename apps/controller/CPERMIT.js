@@ -357,3 +357,43 @@ export const FindContractorPermitByMonth = async (req, res) => {
   return res.status(500).json({ message: "Gagal memuat contractor permit HRGA" });
  }
 }
+
+export const DeleteContractorPermit = async (req, res) => {
+ try {
+  const requesterNIK = String(req.user?.NIK || "").trim();
+  if (requesterNIK !== "1801046") {
+   return res.status(403).json({ status: 0, msg: "Forbidden: Anda tidak memiliki akses delete contractor permit." });
+  }
+
+  const token = String(req.body?.TOKEN || req.body?.token || "").trim();
+  const noPermit = String(req.body?.NOPERMIT || req.body?.no_permit || "").trim();
+
+  if (!token && !noPermit) {
+   return res.status(400).json({ status: 0, msg: "TOKEN atau NOPERMIT wajib diisi." });
+  }
+
+  let deleteSql = "";
+  let replacements = {};
+
+  if (token) {
+   deleteSql = `
+    DELETE FROM [dbo].[contractor_permits]
+    WHERE LTRIM(RTRIM(CAST([token] AS VARCHAR(255)))) = :token
+   `;
+   replacements = { token };
+  } else {
+   deleteSql = `
+    DELETE FROM [dbo].[contractor_permits]
+    WHERE LTRIM(RTRIM(CAST([no_permit] AS VARCHAR(255)))) = :noPermit
+   `;
+   replacements = { noPermit };
+  }
+
+  await HRGA.query(deleteSql, { replacements });
+  return res.json({ status: 1, msg: "Contractor permit berhasil dihapus." });
+ } catch (error) {
+  console.error("DeleteContractorPermit error:", error);
+  console.error("DeleteContractorPermit detail:", error?.message, error?.original || error?.parent || null);
+  return res.status(500).json({ status: 0, msg: "Gagal menghapus contractor permit." });
+ }
+};

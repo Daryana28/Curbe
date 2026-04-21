@@ -26,7 +26,8 @@ export const FindPermByDisplay = async (req, res) => {
   await MPerm.findOne({
     raw: true, nest: true,
     where: {
-      DISPLAY: req.body.DISPLAY
+      DISPLAY: req.body.DISPLAY,
+      ...(req.body.PARKID ? { PARKID: req.body.PARKID } : {}),
     }
   })
     .then((hs) => {

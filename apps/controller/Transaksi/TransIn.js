@@ -4,6 +4,7 @@ import vms from "../../../cfg/conn/VMS.js";
 import MCard from "../../../cfg/model/MCard.js";
 import MParkingLot from "../../../cfg/model/MParkingLot.js";
 import MLog from "../../../cfg/model/MLog.js";
+import { TriggerParkingSync } from "../CParkingSync.js";
 
 const normalizeStatus = (value) => String(value || "").trim().toLowerCase();
 
@@ -91,17 +92,31 @@ export const TransProcess = async (req, res) => {
      nest: true,
      transaction: t
     });
+    const latestTransStatus = normalizeStatus(latestByCard?.STATUS);
     const hasPreviousTrans = Boolean(latestByCard);
     const shouldGenerateNewToken = hasPreviousTrans;
+    const isCardStatusAllowedForCheckIn = ["", "ready", "use"].includes(cardStatus);
+    const isLatestTransClosed =
+     latestTransStatus === "out" || Boolean(String(latestByCard?.AKHIR || "").trim());
 
-    if (!latestByCard && cardStatus && !["", "ready", "use"].includes(cardStatus)) {
+    if (!latestByCard && cardStatus && !isCardStatusAllowedForCheckIn) {
      await saveErrorCodeLog("CARD_STATUS_INVALID", `card:${dataTamu.cardId}|status:${cardStatus}`);
      throw new Error("Status kartu tidak valid untuk check-in baru.");
     }
 
-    if (shouldGenerateNewToken && cardStatus && !["", "ready", "use"].includes(cardStatus)) {
-     await saveErrorCodeLog("CARD_STATUS_CONFLICT", `card:${dataTamu.cardId}|status:${cardStatus}`);
-     throw new Error("Status kartu tidak sinkron, mohon validasi data kartu.");
+    if (hasPreviousTrans && !isLatestTransClosed) {
+     await saveErrorCodeLog(
+      "CARD_ACTIVE_TRANSACTION",
+      `card:${dataTamu.cardId}|trans:${latestByCard?.TRANSID || ""}|status:${latestTransStatus}`
+     );
+     throw new Error("Kartu masih dalam status check-in, lakukan check-out terlebih dahulu.");
+    }
+
+    if (hasPreviousTrans && !isCardStatusAllowedForCheckIn) {
+     await saveErrorCodeLog(
+      "CARD_STATUS_AUTO_RECOVER",
+      `card:${dataTamu.cardId}|status:${cardStatus}|trans:${latestByCard?.TRANSID || ""}|trans_status:${latestTransStatus}`
+     );
     }
 
    if (shouldGenerateNewToken) {
@@ -178,7 +193,8 @@ export const TransProcess = async (req, res) => {
    }
 
    // Update status Master Kartu
-   const cardUpdate = card
+   const shouldUpdateCardMaster = Boolean(dataTamu.cardId) && !isContractor;
+   const cardUpdate = shouldUpdateCardMaster
     ? await MCard.update(
        {
         Status: isOut ? null : "use",
@@ -192,7 +208,11 @@ export const TransProcess = async (req, res) => {
     : [0];
 
    return { transRecord, cardUpdate };
- });
+  });
+
+  if (kendaraan.parkId && !["BERJALAN", "TRUCK"].includes(String(kendaraan.jenis || "").toUpperCase())) {
+   await TriggerParkingSync();
+  }
 
   return res.status(200).json({
    message: `Proses ${isOut ? 'Check Out' : 'Check In'} Berhasil`,

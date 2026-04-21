@@ -5,6 +5,7 @@ import { CountLot, FindAllLotById, FindLotById } from "./CParkingLot.js";
 import { FindPermByDisplay } from "./CPerm.js";
 import { CountTrans } from "./CTransaction.js";
 import { CekTrans } from "./Transaksi/CekTransaksi.js";
+import { BuildParkingSnapshot } from "./CParkingSync.js";
 
 
 export const CountParking = async (req, res) => {
@@ -38,13 +39,73 @@ export const ParkingMonitor = async (req, res) => {
    order: [["DISPLAY", "ASC"]],
   })
   for (let row2 = 0; row2 < lot.length; row2++) {
-   const perm = await FindPermByDisplay({ body: { DISPLAY: lot[row2].DISPLAY } }, 'ret')
+   const perm = await FindPermByDisplay({
+    body: {
+     DISPLAY: lot[row2].DISPLAY,
+     PARKID: park[row].PARKID,
+    }
+   }, 'ret')
    const trans = await CekTrans({ body: { ret: 'ret', TRANSID: lot[row2].TOKEN } }, 'ret')
    lt.push([lot[row2], perm, trans])
   }
   data.push([park[row].JENIS, park[row].NAME, park[row].ROW, park[row].COL, lt])
  }
  res.json(data)
+}
+
+export const ParkingSnapshot = async (req, res) => {
+ try {
+  const snapshot = await BuildParkingSnapshot();
+  return res.json({
+   status: 1,
+   data: snapshot,
+  });
+ } catch (error) {
+  console.error("ParkingSnapshot error:", error);
+  return res.status(500).json({
+   status: 0,
+   msg: "FAILED LOAD PARKING SNAPSHOT",
+   error: error.message,
+  });
+ }
+}
+
+export const ParkingSnapshotSupplier = async (req, res) => {
+ try {
+  const snapshot = await BuildParkingSnapshot();
+  return res.json({
+   message: "success",
+   data: {
+    generatedAt: snapshot.generated_at,
+    totalSlots: snapshot.summary.total_slots,
+    availableSlots: snapshot.summary.available_slots,
+    occupiedSlots: snapshot.summary.occupied_slots,
+    reservedSlots: snapshot.summary.reserved_slots,
+    slots: snapshot.slots.map((slot) => ({
+     id: slot.id,
+     parkId: slot.park_id,
+     parkName: slot.park_name,
+     parkType: slot.park_type,
+     parkingNumber: slot.slot_number,
+     parkingName: slot.slot_number,
+     status: slot.status,
+     isAvailable: slot.available,
+     isOccupied: slot.occupied,
+     vehicleNumber: slot.vehicle_number,
+     visitorName: slot.visitor_name,
+     cardId: slot.card_id,
+     checkIn: slot.check_in,
+     updatedAt: slot.updated_at,
+    })),
+   },
+  });
+ } catch (error) {
+  console.error("ParkingSnapshotSupplier error:", error);
+  return res.status(500).json({
+   message: "failed",
+   error: error.message,
+  });
+ }
 }
 
 export const findParkingByDisp = async (req, res) => {

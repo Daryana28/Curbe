@@ -6,6 +6,7 @@ import { DataCard } from "./CCard.js";
 import MParkingLot from "../../cfg/model/MParkingLot.js";
 import MCard from "../../cfg/model/MCard.js";
 import vms from "../../cfg/conn/VMS.js";
+import { TriggerParkingSync } from "./CParkingSync.js";
 
 const date = moment().format('YYYY-MM-DD')
 
@@ -155,6 +156,10 @@ export const TransOut = async (req, res) => {
    { where: { TRANSID } }
   );
 
+  if (JENIS !== 'BERJALAN' && JENIS !== 'TRUCK') {
+   await TriggerParkingSync();
+  }
+
   return res.status(200).json({ success: true, message: "Check Out berhasil" });
  } catch (error) {
   console.error("TransOut error:", error);
@@ -211,6 +216,9 @@ export const TransKarIn = async (req, res) => {
    return { trans, parkirUpdate, cardUpdate };
 
   })
+  if (kendaraan.parkId && !['BERJALAN', 'TRUCK'].includes(String(kendaraan.jenis || '').toUpperCase())) {
+   await TriggerParkingSync();
+  }
   return res.status(200).json({ message: "Transaksi berhasil", result });
 
 
@@ -308,6 +316,10 @@ export const DeleteTrans = async (req, res) => {
     );
    }
   });
+
+  if (transaksi.PARKID && transaksi.DISPLAY) {
+   await TriggerParkingSync();
+  }
 
   return res.status(200).json({ message: "Transaksi berhasil dihapus" });
  } catch (error) {

@@ -1,13 +1,16 @@
 import express from 'express'
 import { FindUser, ListKaryawan, Login, Logout, refreshToken } from '../controller/CLogin.js'
 import { CekLogin } from '../middleware/CekLogin.js'
+import { CekSupplierKey } from '../middleware/CekSupplierKey.js'
 import { CekDisplay, FindAllLotById, UpdLot } from '../controller/CParkingLot.js'
 import { CountTrans, DeleteTrans, FindTransByDate, Foto, Identitas, RegisterVisitor, TransKarIn, TransOut } from '../controller/CTransaction.js'
 import { FindPermByDisplay, ListPerm } from '../controller/CPerm.js'
 import { ListVehicle } from '../controller/CVehicle.js'
 import { GetVisitorList } from '../controller/CVisitor.js'
 import { CountParking, FindMasterParkByJenis, ParkingMonitor } from '../controller/CPark.js'
-import { FindContractorPermitByMonth, FindPermitByMonth, ManagePermit } from '../controller/CPERMIT.js'
+import { ParkingSnapshot, ParkingSnapshotSupplier } from '../controller/CPark.js'
+import { ParkingSync, VehicleParkingAccessSync } from '../controller/CParkingSync.js'
+import { DeleteContractorPermit, FindContractorPermitByMonth, FindPermitByMonth, ManagePermit } from '../controller/CPERMIT.js'
 import { AddPengguna, DelPengguna, ListPengguna } from '../controller/CPengguna.js'
 import { CekQR } from '../controller/Register/CekQR.js'
 import { CekCard } from '../controller/Register/CekCard.js'
@@ -51,6 +54,7 @@ router.post('/CountTrans', CekLogin, CountTrans)
 
 router.post('/FindPermitByMonth', CekLogin, FindPermitByMonth)
 router.post('/FindContractorPermitByMonth', CekLogin, FindContractorPermitByMonth)
+router.post('/DeleteContractorPermit', CekLogin, DeleteContractorPermit)
 router.post('/ManagePermit', CekLogin, ManagePermit)
 
 router.post('/FindPermByDisplay', FindPermByDisplay)
@@ -66,6 +70,10 @@ router.post('/UpdLot', CekLogin, UpdLot)
 router.post('/FindMasterParkByJenis', CekLogin, FindMasterParkByJenis)
 router.post('/ParkingMonitor', CekLogin, ParkingMonitor)
 router.post('/CountParking', CekLogin, CountParking)
+router.post('/ParkingSnapshot', CekLogin, ParkingSnapshot)
+router.post('/ParkingSync', CekLogin, ParkingSync)
+router.post('/Koito/VehicleParkingAccessSync', CekLogin, VehicleParkingAccessSync)
+router.get('/Koito/ParkingStatus', CekSupplierKey, ParkingSnapshotSupplier)
 
 router.get('/WebPush/PublicKey', CekLogin, GetWebPushPublicKey)
 router.post('/WebPush/Subscribe', CekLogin, SubscribeWebPush)
